@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# edapack build scratch / outputs / ivpm deps
+packages/
+.build/
+tests/*/work/
+tests/smoke_work/

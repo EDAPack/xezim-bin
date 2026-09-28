@@ -1,0 +1,12 @@
+# Agent Skills shipped in the xezim-bin release tarball.
+# Consumed by update/stage-skills.py from scripts/build.sh.
+# See SKILL_DEVELOPMENT_PROCESS.md (edapack repo root) for the authoring process.
+#
+# build.sh stages skills from a COPY of this repo: it stamps the built version
+# into SKILL.md's frontmatter and adds references/upstream-guide.md, taken from
+# upstream's docs/xezim-skill.md at the commit being built, so the detailed
+# usage guide always matches the binary it ships with.
+skills:
+  - name: xezim
+    path: skills/xezim
+    binaries: [xezim, sv-parse]

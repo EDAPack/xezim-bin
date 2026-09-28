@@ -1,0 +1,36 @@
+# Input components for xezim-bin, resolved by edapack-common's
+# resolve-inputs.py. See https://edapack.github.io (Developer Guide → build-inputs).
+#
+# Comments are kept in this header (not inline in the body) because the
+# published @v1 resolver's YAML parser neither strips trailing inline comments
+# nor skips comment lines when deciding a block's type.
+#   core xezim      - dev track follows main (top-of-trunk); pin with core_ref=0.11.0
+#   release_policy  - release track builds the newest upstream tag. xezim tags
+#                     bare versions (`0.11.0`, no `v`) and does NOT cut a GitHub
+#                     Release for every tag (0.10.4-0.10.6 have none), so this
+#                     is latest-tag, not latest-release. The regex keeps any
+#                     future `0.12.0-rc1` from being published as a release.
+#   version_probe   - a branch policy yields no version from the ref alone;
+#                     read `version = "..."` out of Cargo.toml. Upstream bumps
+#                     it AT release, so on main it names the LAST release and a
+#                     dev build is `0.11.0.<run-id>` -- "after 0.11.0".
+#   release_notes   - upstream changelog; its `### 0.11.0 — ...` section
+#                     becomes the GitHub release body on the release track.
+#   dependencies    - none. xezim pins xezim-core (and sv-parser, which lives in
+#                     the xezim-core repo) to an exact git rev in its own
+#                     Cargo.toml, bumped in the same push that needs it. The
+#                     xezim commit therefore determines the core; declaring it
+#                     separately would only let the two disagree. build.sh
+#                     records the rev actually built (from Cargo.lock) in
+#                     share/xezim/BUILD-INFO.txt.
+schema: edapack.build-inputs/1
+
+core:
+  name: xezim
+  repo: https://github.com/aionhw/xezim
+  policy: branch:main
+  release_policy: 'latest-tag:^\d+\.\d+(\.\d+)?$'
+  version_probe: Cargo.toml:version
+  release_notes: NOTES.md
+
+dependencies: []
