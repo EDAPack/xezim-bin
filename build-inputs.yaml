@@ -1,5 +1,5 @@
 # Input components for xezim-bin, resolved by edapack-common's
-# resolve-inputs.py. See https://edapack.github.io (Developer Guide → build-inputs).
+# resolve-inputs.py. See https://dvkit.org/edapack/ (Developer Guide → build-inputs).
 #
 # Comments are kept in this header (not inline in the body) because the
 # published @v1 resolver's YAML parser neither strips trailing inline comments

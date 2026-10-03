@@ -26,7 +26,7 @@ name: CI
 # Thin caller of the shared edapack build pipeline. All build/release logic
 # (resolve inputs -> change-gate -> build matrix -> publish, with a release
 # manifest) lives in edapack-common. Input components are declared in
-# build-inputs.yaml. See https://edapack.github.io (Developer Guide).
+# build-inputs.yaml. See https://dvkit.org/edapack/ (Developer Guide).
 #
 # Two tracks call the same reusable workflow:
 #   dev     - weekly top-of-trunk snapshot, v<ver>.<run-id>, pre-release,
