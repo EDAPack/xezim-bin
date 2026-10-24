@@ -37,18 +37,12 @@ name: CI
 # branches opposite ways on whether we have already released it, so a run that
 # publishes a release does not also publish a redundant snapshot.
 #
-# CADENCE DIFFERS FROM verilator-bin, deliberately. Verilator tags every 6-8
-# weeks; xezim tagged 0.10.3 -> 0.11.0 in five weeks (08-21, 09-03, 09-05,
-# 09-18, 09-26). With a single weekly run the release track would win almost
-# every Sunday, so the snapshot would almost never publish, and a tag could sit
-# unbuilt for up to seven days. So the release track checks DAILY (a no-op run
-# is one ~30 s resolve job) and the dev track runs only on the weekly cron.
-# Precedence still holds on Sunday: both jobs run and the dev track stands down
-# only if a release is being built in that same run.
+# Both tracks run on one weekly cron (Sunday). A new upstream tag can therefore
+# wait up to seven days to be built; dispatch with track=release to build one
+# sooner.
 on:
   push:
   schedule:
-    - cron: "0 6 * * *"    # daily: release track only -- builds a new upstream tag, if any
     - cron: "0 12 * * 0"   # Sunday: both tracks -- dev publishes only if inputs changed
   workflow_dispatch:
     inputs:
@@ -75,7 +69,7 @@ on:
 
 jobs:
   # Newest upstream tag we have not published yet. Skipped on push: a recipe
-  # commit cannot change what upstream has tagged. Runs on both crons.
+  # commit cannot change what upstream has tagged. Runs on the weekly cron.
   release:
     if: >-
       github.event_name != 'push' &&
@@ -95,13 +89,12 @@ jobs:
         ]
       force: ${{ github.event_name == 'workflow_dispatch' && inputs.force }}
 
-  # Top-of-trunk snapshot. Weekly cron only (not the daily one), plus push and
-  # dispatch. Stands down inside `resolve` when the release track has something
-  # to build, so no dependency on the release job is needed here.
+  # Top-of-trunk snapshot. Weekly cron, plus push and dispatch. Stands down
+  # inside `resolve` when the release track has something to build in the
+  # same run, so no dependency on the release job is needed here.
   dev:
     if: >-
-      (github.event_name != 'schedule' || github.event.schedule == '0 12 * * 0') &&
-      (github.event_name != 'workflow_dispatch' || inputs.track != 'release')
+      github.event_name != 'workflow_dispatch' || inputs.track != 'release'
     uses: edapack/edapack-common/.github/workflows/build-release.yml@v1
     with:
       package: xezim-bin
