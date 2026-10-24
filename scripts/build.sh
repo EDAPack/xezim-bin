@@ -103,6 +103,39 @@ export CARGO_TARGET_DIR="$WORK_DIR/target"
 # that the variable is set). The release build never runs those tests.
 export XEZIM_UVM_DIR="$WORK_DIR/no-test-uvm"
 
+# --- memfd_create shim for glibc < 2.27 (manylinux2014) ----------------------
+# xezim's FST writer calls libc::memfd_create, a glibc 2.27 symbol, so the link
+# fails on manylinux2014 (glibc 2.17). Supply it from a static archive that
+# makes the raw syscall: the binary then carries no GLIBC_2.27 reference, and on
+# a kernel without the syscall (< 3.17) it returns -1/ENOSYS, which upstream
+# already handles by falling back to a temporary file.
+if [ "$os" = "Linux" ]; then
+    glibc_ver="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $2}')"
+    if [ -n "$glibc_ver" ] && [ "$(printf '%s\n2.27\n' "$glibc_ver" | sort -V | head -1)" != "2.27" ]; then
+        ec_log "glibc $glibc_ver < 2.27: linking memfd_create shim"
+        shim_dir="$WORK_DIR/memfd-shim"
+        mkdir -p "$shim_dir"
+        cat > "$shim_dir/memfd_shim.c" <<'EOF'
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <sys/syscall.h>
+#ifndef SYS_memfd_create
+# if defined(__x86_64__)
+#  define SYS_memfd_create 319
+# elif defined(__aarch64__)
+#  define SYS_memfd_create 279
+# endif
+#endif
+int memfd_create(const char *name, unsigned int flags) {
+    return (int)syscall(SYS_memfd_create, name, flags);
+}
+EOF
+        gcc -O2 -fPIC -c "$shim_dir/memfd_shim.c" -o "$shim_dir/memfd_shim.o"
+        ar rcs "$shim_dir/libmemfdshim.a" "$shim_dir/memfd_shim.o"
+        export RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=$shim_dir/libmemfdshim.a"
+    fi
+fi
+
 # --- build xezim ------------------------------------------------------------
 # Interpreter only (no `--features jit`): the simplest configuration, and the
 # one upstream's default `cargo build` produces.
